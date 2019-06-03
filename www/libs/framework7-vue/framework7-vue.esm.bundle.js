@@ -1,13 +1,13 @@
 /**
- * Framework7 Vue 3.4.0
+ * Framework7 Vue 3.6.7
  * Build full featured iOS & Android apps using Framework7 & Vue
  * http://framework7.io/vue/
  *
- * Copyright 2014-2018 Vladimir Kharlampidi
+ * Copyright 2014-2019 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: September 28, 2018
+ * Released on: February 13, 2019
  */
 import Vue from 'vue';
 import f7AccordionContent from './components/accordion-content';
@@ -43,6 +43,7 @@ import f7Link from './components/link';
 import f7ListButton from './components/list-button';
 import f7ListGroup from './components/list-group';
 import f7ListIndex from './components/list-index';
+import f7ListInput from './components/list-input';
 import f7ListItemCell from './components/list-item-cell';
 import f7ListItemContent from './components/list-item-content';
 import f7ListItemRow from './components/list-item-row';
@@ -137,6 +138,7 @@ const Plugin = {
     Vue.component('f7-list-button', f7ListButton);
     Vue.component('f7-list-group', f7ListGroup);
     Vue.component('f7-list-index', f7ListIndex);
+    Vue.component('f7-list-input', f7ListInput);
     Vue.component('f7-list-item-cell', f7ListItemCell);
     Vue.component('f7-list-item-content', f7ListItemContent);
     Vue.component('f7-list-item-row', f7ListItemRow);
@@ -231,6 +233,9 @@ const Plugin = {
         let route;
         // eslint-disable-next-line
         if ('vue' === 'vue') {
+          if (self.$vnode && self.$vnode.data && self.$vnode.data.props && self.$vnode.data.props.f7route) {
+            route = self.$vnode.data.props.f7route;
+          }
           let parent = self;
           while (parent && !route) {
             if (parent._f7route) route = parent._f7route;
@@ -254,6 +259,9 @@ const Plugin = {
         let router;
         // eslint-disable-next-line
         if ('vue' === 'vue') {
+          if (self.$vnode && self.$vnode.data && self.$vnode.data.props && self.$vnode.data.props.f7route) {
+            router = self.$vnode.data.props.f7router;
+          }
           let parent = self;
           while (parent && !router) {
             if (parent._f7router) router = parent._f7router;

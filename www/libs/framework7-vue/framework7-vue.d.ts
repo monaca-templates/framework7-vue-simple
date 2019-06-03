@@ -40,6 +40,7 @@ import f7Link from './components/link';
 import f7ListButton from './components/list-button';
 import f7ListGroup from './components/list-group';
 import f7ListIndex from './components/list-index';
+import f7ListInput from './components/list-input';
 import f7ListItemCell from './components/list-item-cell';
 import f7ListItemContent from './components/list-item-content';
 import f7ListItemRow from './components/list-item-row';
@@ -89,7 +90,7 @@ import f7Toolbar from './components/toolbar';
 import f7View from './components/view';
 import f7Views from './components/views';
 
-declare interface Framework7Extensions {
+export interface Framework7Extensions {
   /** Main Framework7's initialized instance. It allows you to use any of Framework7 APIs */
   $f7: Framework7
   /** Callback function that will be executed when Framework7 fully intialized. Useful to use in components when you need to access Framework7 API and to be sure it is ready. So it is safe to put all Framework7 related logic into this callback. As an argument it receives initialized Framework7 instance */
@@ -116,7 +117,7 @@ declare interface Framework7Extensions {
 }
 
 declare module 'vue/types/vue' {
-  interface Vue extends Framework7Extensions {}
+  interface Vue extends Partial<Framework7Extensions> {}
 }
 
 export {
@@ -153,6 +154,7 @@ export {
   f7ListButton,
   f7ListGroup,
   f7ListIndex,
+  f7ListInput,
   f7ListItemCell,
   f7ListItemContent,
   f7ListItemRow,

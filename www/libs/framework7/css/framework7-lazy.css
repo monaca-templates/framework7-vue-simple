@@ -1,13 +1,13 @@
 /**
- * Framework7 3.4.0
+ * Framework7 3.6.7
  * Full featured mobile HTML framework for building iOS & Android apps
  * http://framework7.io/
  *
- * Copyright 2014-2018 Vladimir Kharlampidi
+ * Copyright 2014-2019 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: September 28, 2018
+ * Released on: February 13, 2019
  */
 html,
 body,
@@ -80,7 +80,7 @@ p {
   pointer-events: none !important;
 }
 .ios body {
-  font-family: -apple-system, SF UI Text, Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, SF Pro Text, SF UI Text, system-ui, Helvetica Neue, Helvetica, Arial, sans-serif;
   color: #000;
   line-height: 1.4;
 }
@@ -163,7 +163,7 @@ p {
   color: #000000;
 }
 .md body {
-  font-family: Roboto, Noto, Helvetica, Arial, sans-serif;
+  font-family: Roboto, system-ui, Noto, Helvetica, Arial, sans-serif;
   color: #212121;
   line-height: 1.5;
 }
@@ -3479,6 +3479,8 @@ html.with-statusbar.device-iphone-x .framework7-root {
 .list li:last-child li:last-child > .item-inner:after,
 .list li:last-child > .item-content > .item-inner:after,
 .list li:last-child li:last-child > .item-content > .item-inner:after,
+.list li:last-child > .swipeout-content > .item-content > .item-inner:after,
+.list li:last-child li:last-child > .swipeout-content > .item-content > .item-inner:after,
 .list li:last-child > .item-link > .item-content > .item-inner:after,
 .list li:last-child li:last-child > .item-link > .item-content > .item-inner:after {
   display: none !important;
@@ -3676,7 +3678,8 @@ li.list-group-title {
   overflow: hidden;
   z-index: 15;
 }
-li.list-group-title {
+li.list-group-title,
+.list li.list-group-title {
   position: relative;
   position: -webkit-sticky;
   position: sticky;
@@ -3684,7 +3687,8 @@ li.list-group-title {
   margin-top: 0;
   z-index: 20;
 }
-li.list-group-title:before {
+li.list-group-title:before,
+.list li.list-group-title:before {
   display: none !important;
 }
 .list.inset .block-title {
