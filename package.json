@@ -1,5 +1,6 @@
 {
   "name": "frameworkd7-vue-simple",
+  "version": "2.0.0",
   "displayName": "Framework7 Vue Simple",
   "dependencies": {
     "cordova-custom-config": "5.1.0",
@@ -22,7 +23,7 @@
     }
   },
   "devDependencies": {
-    "browser-sync": "^2.26.5",
+    "browser-sync": "^2.26.7",
     "cordova": "^9.0.0",
     "cpy-cli": "^1.0.1",
     "vue": "^2.5.16",
