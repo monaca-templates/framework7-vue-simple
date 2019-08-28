@@ -1,20 +1,20 @@
 /**
- * Framework7 Vue 3.4.0
+ * Framework7 Vue 3.6.7
  * Build full featured iOS & Android apps using Framework7 & Vue
  * http://framework7.io/vue/
  *
- * Copyright 2014-2018 Vladimir Kharlampidi
+ * Copyright 2014-2019 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: September 28, 2018
+ * Released on: February 13, 2019
  */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('vue')) :
   typeof define === 'function' && define.amd ? define(['vue'], factory) :
-  (global.Framework7Vue = factory(global.Vue));
-}(this, (function (Vue) { 'use strict';
+  (global = global || self, global.Framework7Vue = factory(global.Vue));
+}(this, function (Vue) { 'use strict';
 
   Vue = Vue && Vue.hasOwnProperty('default') ? Vue['default'] : Vue;
 
@@ -153,12 +153,12 @@
         default: undefined,
       },
       ignoreCache: Boolean,
-      pageName: String,
       reloadCurrent: Boolean,
       reloadAll: Boolean,
       reloadPrevious: Boolean,
       routeTabId: String,
       view: String,
+      routeProps: Object,
     },
     linkRouterAttrs: function linkRouterAttrs(props) {
       var force = props.force;
@@ -383,26 +383,36 @@
       opened: Boolean
     }, Mixins.colorProps),
 
-    mounted: function mounted() {
+    created: function created() {
       var self = this;
-      var el = self.$el;
-      if (!el) { return; }
+      self.onBeforeOpenBound = self.onBeforeOpen.bind(self);
       self.onOpenBound = self.onOpen.bind(self);
       self.onOpenedBound = self.onOpened.bind(self);
+      self.onBeforeCloseBound = self.onBeforeClose.bind(self);
       self.onCloseBound = self.onClose.bind(self);
       self.onClosedBound = self.onClosed.bind(self);
+    },
+
+    mounted: function mounted() {
+      var self = this;
+      var el = self.$refs.el;
+      if (!el) { return; }
+      el.addEventListener('accordion:beforeopen', self.onBeforeOpenBound);
       el.addEventListener('accordion:open', self.onOpenBound);
       el.addEventListener('accordion:opened', self.onOpenedBound);
+      el.addEventListener('accordion:beforeclose', self.onBeforeCloseBound);
       el.addEventListener('accordion:close', self.onCloseBound);
       el.addEventListener('accordion:closed', self.onClosedBound);
     },
 
     beforeDestroy: function beforeDestroy() {
       var self = this;
-      var el = self.$el;
+      var el = self.$refs.el;
       if (!el) { return; }
+      el.removeEventListener('accordion:beforeopen', self.onBeforeOpenBound);
       el.removeEventListener('accordion:open', self.onOpenBound);
       el.removeEventListener('accordion:opened', self.onOpenedBound);
+      el.removeEventListener('accordion:beforeclose', self.onBeforeCloseBound);
       el.removeEventListener('accordion:close', self.onCloseBound);
       el.removeEventListener('accordion:closed', self.onClosedBound);
     },
@@ -420,6 +430,7 @@
       return _h('div', {
         style: style,
         class: classes,
+        ref: 'el',
         attrs: {
           id: id
         }
@@ -427,12 +438,20 @@
     },
 
     methods: {
+      onBeforeOpen: function onBeforeOpen(event) {
+        this.dispatchEvent('accordionBeforeOpen accordion:beforeopen', event, event.detail.prevent);
+      },
+
       onOpen: function onOpen(event) {
         this.dispatchEvent('accordionOpen accordion:open', event);
       },
 
       onOpened: function onOpened(event) {
         this.dispatchEvent('accordionOpened accordion:opened', event);
+      },
+
+      onBeforeClose: function onBeforeClose(event) {
+        this.dispatchEvent('accordionBeforeClose accordion:beforeclose', event, event.detail.prevent);
       },
 
       onClose: function onClose(event) {
@@ -554,15 +573,24 @@
         style: style,
         class: classes,
         ref: 'el',
-        on: {
-          click: self.onClick.bind(self)
-        },
         attrs: {
           id: id
         }
       }, [mediaEl, _h('div', {
         class: 'actions-button-text'
       }, [this.$slots['default']])]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
     },
 
     methods: {
@@ -646,13 +674,23 @@
       return _h('div', {
         style: style,
         class: classes,
-        on: {
-          click: self.onClick.bind(self)
-        },
+        ref: 'el',
         attrs: {
           id: id
         }
       }, [this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
     },
 
     methods: {
@@ -766,7 +804,7 @@
     beforeDestroy: function beforeDestroy() {
       var self = this;
       if (self.f7Actions) { self.f7Actions.destroy(); }
-      var el = self.$el;
+      var el = self.$refs.el;
       if (!el) { return; }
       el.removeEventListener('actions:open', self.onOpenBound);
       el.removeEventListener('actions:opened', self.onOpenedBound);
@@ -1184,7 +1222,7 @@
     }, Mixins.colorProps),
 
     mounted: function mounted() {
-      var el = this.$el;
+      var el = this.$refs.el;
       if (!el) { return; }
       this.onTabShowBound = this.onTabShow.bind(this);
       this.onTabHideBound = this.onTabHide.bind(this);
@@ -1193,7 +1231,7 @@
     },
 
     beforeDestroy: function beforeDestroy() {
-      var el = this.$el;
+      var el = this.$refs.el;
       if (!el) { return; }
       el.removeEventListener('tab:show', this.onTabShowBound);
       el.removeEventListener('tab:hide', this.onTabHideBound);
@@ -1231,6 +1269,7 @@
       return _h('div', {
         style: style,
         class: classes,
+        ref: 'el',
         attrs: {
           id: id
         }
@@ -1543,9 +1582,6 @@
         style: style,
         class: self.classes
       }, self.attrs, {
-        on: {
-          click: self.onClick.bind(self)
-        },
         attrs: {
           id: id
         }
@@ -1642,21 +1678,48 @@
       }
     },
 
+    created: function created() {
+      var self = this;
+      self.onClickBound = self.onClick.bind(self);
+    },
+
     mounted: function mounted() {
       var self = this;
+      var el = self.$refs.el;
+      el.addEventListener('click', self.onClickBound);
       var ref = self.props;
       var tooltip = ref.tooltip;
+      var routeProps = ref.routeProps;
+
+      if (routeProps) {
+        el.f7RouteProps = routeProps;
+      }
+
       if (!tooltip) { return; }
       self.$f7ready(function (f7) {
         self.f7Tooltip = f7.tooltip.create({
-          targetEl: self.$refs.el,
+          targetEl: el,
           text: tooltip
         });
       });
     },
 
+    updated: function updated() {
+      var self = this;
+      var el = self.$refs.el;
+      var ref = self.props;
+      var routeProps = ref.routeProps;
+
+      if (routeProps) {
+        el.f7RouteProps = routeProps;
+      }
+    },
+
     beforeDestroy: function beforeDestroy() {
       var self = this;
+      var el = self.$refs.el;
+      el.removeEventListener('click', self.onClickBound);
+      delete el.f7RouteProps;
 
       if (self.f7Tooltip && self.f7Tooltip.destroy) {
         self.f7Tooltip.destroy();
@@ -1857,6 +1920,7 @@
       var inputEl;
       {
         inputEl = _h('input', {
+          ref: 'inputEl',
           domProps: {
             value: value,
             disabled: disabled,
@@ -1864,7 +1928,7 @@
             checked: checked
           },
           on: {
-            change: self.onChange.bind(self)
+            change: self.onChange
           },
           attrs: {
             type: 'checkbox',
@@ -1903,6 +1967,11 @@
       }
 
     },
+
+    created: function created() {
+      this.onChange = this.onChange.bind(this);
+    },
+
     methods: {
       onChange: function onChange(event) {
         this.dispatchEvent('change', event);
@@ -1962,10 +2031,8 @@
 
       if (deleteable) {
         deleteEl = _h('a', {
+          ref: 'deleteEl',
           class: 'chip-delete',
-          on: {
-            click: self.onDeleteClick.bind(self)
-          },
           attrs: {
             href: '#'
           }
@@ -1976,15 +2043,34 @@
         'chip-outline': outline
       }, Mixins.colorClasses(props));
       return _h('div', {
+        ref: 'el',
         style: style,
         class: classes,
-        on: {
-          click: self.onClick.bind(self)
-        },
         attrs: {
           id: id
         }
       }, [mediaEl, labelEl, deleteEl]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+      this.onDeleteClick = this.onDeleteClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+
+      if (this.$refs.deleteEl) {
+        this.$refs.deleteEl.addEventListener('click', this.onDeleteClick);
+      }
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
+
+      if (this.$refs.deleteEl) {
+        this.$refs.deleteEl.removeEventListener('click', this.onDeleteClick);
+      }
     },
 
     methods: {
@@ -2052,13 +2138,23 @@
       return _h(ColTag, {
         style: style,
         class: classes,
-        on: {
-          click: self.onClick.bind(self)
-        },
+        ref: 'el',
         attrs: {
           id: id
         }
       }, [this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
     },
 
     methods: {
@@ -2114,11 +2210,9 @@
       }
 
       return _h('a', {
+        ref: 'el',
         style: style,
         class: classes,
-        on: {
-          click: this.onClick.bind(this)
-        },
         attrs: {
           id: id,
           target: target
@@ -2147,8 +2241,13 @@
       }
     },
 
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
     mounted: function mounted() {
       var self = this;
+      self.$refs.el.addEventListener('click', self.onClick);
       var ref = self.props;
       var tooltip = ref.tooltip;
       if (!tooltip) { return; }
@@ -2162,6 +2261,7 @@
 
     beforeDestroy: function beforeDestroy() {
       var self = this;
+      self.$refs.el.removeEventListener('click', self.onClick);
 
       if (self.f7Tooltip && self.f7Tooltip.destroy) {
         self.f7Tooltip.destroy();
@@ -2274,10 +2374,8 @@
 
       if (linkChildren.length || linkSlots && linkSlots.length) {
         linkEl = _h('a', {
+          ref: 'linkEl',
           key: 'f7-fab-link',
-          on: {
-            click: self.onClick.bind(self)
-          },
           attrs: {
             target: target,
             href: href
@@ -2321,8 +2419,17 @@
       }
     },
 
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
     mounted: function mounted() {
       var self = this;
+
+      if (self.$refs.linkEl) {
+        self.$refs.linkEl.addEventListener('click', self.onClick);
+      }
+
       var ref = self.props;
       var tooltip = ref.tooltip;
       if (!tooltip) { return; }
@@ -2336,6 +2443,10 @@
 
     beforeDestroy: function beforeDestroy() {
       var self = this;
+
+      if (self.$refs.linkEl) {
+        self.$refs.linkEl.removeEventListener('click', self.onClick);
+      }
 
       if (self.f7Tooltip && self.f7Tooltip.destroy) {
         self.f7Tooltip.destroy();
@@ -2562,6 +2673,7 @@
       var inputEl;
       {
         inputEl = _h('input', {
+          ref: 'inputEl',
           domProps: {
             disabled: disabled,
             readOnly: readonly,
@@ -2569,7 +2681,7 @@
             checked: checked
           },
           on: {
-            change: self.onChange.bind(self)
+            change: self.onChange
           },
           attrs: {
             type: 'checkbox',
@@ -2595,6 +2707,10 @@
         if (!self.f7Toggle) { return; }
         self.f7Toggle.checked = newValue;
       }
+    },
+
+    created: function created() {
+      this.onChange = this.onChange.bind(this);
     },
 
     mounted: function mounted() {
@@ -2685,7 +2801,8 @@
       draggableBar: {
         type: Boolean,
         default: true
-      }
+      },
+      formatLabel: Function
     }, Mixins.colorProps),
 
     render: function render() {
@@ -2739,6 +2856,7 @@
         var label = props.label;
         var dual = props.dual;
         var draggableBar = props.draggableBar;
+        var formatLabel = props.formatLabel;
         self.f7Range = f7.range.create(Utils.noUndefinedProps({
           el: self.$refs.el,
           value: value,
@@ -2748,6 +2866,7 @@
           label: label,
           dual: dual,
           draggableBar: draggableBar,
+          formatLabel: formatLabel,
           on: {
             change: function change(range, val) {
               self.dispatchEvent('range:change rangeChange', val);
@@ -2845,6 +2964,21 @@
       }
     }, Mixins.colorProps),
 
+    data: function data() {
+      var props = __vueComponentProps(this);
+
+      var state = (function () {
+        return {
+          inputFocused: false,
+          inputInvalid: false
+        };
+      })();
+
+      return {
+        state: state
+      };
+    },
+
     render: function render() {
       var _h = this.$createElement;
       var self = this;
@@ -2889,32 +3023,47 @@
       var noStoreData = props.noStoreData;
       var noFormStoreData = props.noFormStoreData;
       var ignoreStoreData = props.ignoreStoreData;
+      var domValue = self.domValue();
+      var inputHasValue = self.inputHasValue();
       var inputEl;
 
-      var createInput = function (tag, children) {
-        var InputTag = tag;
+      var createInput = function (InputTag, children) {
         var needsValue = type !== 'file';
-        var needsType = tag === 'input';
-        var inputClassName = Utils.classNames(type === 'textarea' && resizable && 'resizable', !wrap && className, (noFormStoreData || noStoreData || ignoreStoreData) && 'no-store-data', errorMessage && errorMessageForce && 'input-invalid');
+        var needsType = InputTag === 'input';
+        var inputClassName = Utils.classNames(!wrap && className, {
+          resizable: type === 'textarea' && resizable,
+          'no-store-data': noFormStoreData || noStoreData || ignoreStoreData,
+          'input-invalid': errorMessage && errorMessageForce || self.state.inputInvalid,
+          'input-with-value': inputHasValue,
+          'input-focused': self.state.inputFocused
+        });
         var input;
+        var inputValue;
+
+        if (needsValue) {
+          if (typeof value !== 'undefined') { inputValue = value; }else { inputValue = domValue; }
+        }
+
+        var valueProps = {};
+        if ('value' in props) { valueProps.value = inputValue; }
+        if ('defaultValue' in props) { valueProps.defaultValue = defaultValue; }
         {
           input = _h(InputTag, {
             ref: 'inputEl',
             style: inputStyle,
             class: inputClassName,
-            domProps: {
-              value: needsValue ? value : undefined,
+            domProps: Object.assign({
               checked: checked,
               disabled: disabled,
               readOnly: readonly,
               multiple: multiple,
               required: required
-            },
+            }, valueProps),
             on: {
-              focus: self.onFocusBound,
-              blur: self.onBlurBound,
-              input: self.onInputBound,
-              change: self.onChangeBound
+              focus: self.onFocus,
+              blur: self.onBlur,
+              input: self.onInput,
+              change: self.onChange
             },
             attrs: {
               name: name,
@@ -2962,7 +3111,7 @@
       } else if (type === 'toggle') {
         inputEl = _h(F7Toggle, {
           on: {
-            change: self.onChangeBound
+            change: self.onChange
           },
           attrs: {
             checked: checked,
@@ -2976,7 +3125,7 @@
       } else if (type === 'range') {
         inputEl = _h(F7Range, {
           on: {
-            rangeChange: self.onChangeBound
+            rangeChange: self.onChange
           },
           attrs: {
             value: value,
@@ -3027,14 +3176,14 @@
 
     created: function created() {
       var self = this;
-      self.onFocusBound = self.onFocus.bind(self);
-      self.onBlurBound = self.onBlur.bind(self);
-      self.onInputBound = self.onInput.bind(self);
-      self.onChangeBound = self.onChange.bind(self);
-      self.onTextareaResizeBound = self.onTextareaResize.bind(self);
-      self.onInputNotEmptyBound = self.onInputNotEmpty.bind(self);
-      self.onInputEmptyBound = self.onInputEmpty.bind(self);
-      self.onInputClearBound = self.onInputClear.bind(self);
+      self.onFocus = self.onFocus.bind(self);
+      self.onBlur = self.onBlur.bind(self);
+      self.onInput = self.onInput.bind(self);
+      self.onChange = self.onChange.bind(self);
+      self.onTextareaResize = self.onTextareaResize.bind(self);
+      self.onInputNotEmpty = self.onInputNotEmpty.bind(self);
+      self.onInputEmpty = self.onInputEmpty.bind(self);
+      self.onInputClear = self.onInputClear.bind(self);
     },
 
     mounted: function mounted() {
@@ -3050,22 +3199,22 @@
         if (type === 'range' || type === 'toggle') { return; }
         var inputEl = self.$refs.inputEl;
         if (!inputEl) { return; }
-        inputEl.addEventListener('input:notempty', self.onInputNotEmptyBound, false);
+        inputEl.addEventListener('input:notempty', self.onInputNotEmpty, false);
 
         if (type === 'textarea' && resizable) {
-          inputEl.addEventListener('textarea:resze', self.onTextareaResizeBound, false);
+          inputEl.addEventListener('textarea:resze', self.onTextareaResize, false);
         }
 
         if (clearButton) {
-          inputEl.addEventListener('input:empty', self.onInputEmptyBound, false);
-          inputEl.addEventListener('input:clear', self.onInputClearBound, false);
+          inputEl.addEventListener('input:empty', self.onInputEmpty, false);
+          inputEl.addEventListener('input:clear', self.onInputClear, false);
         }
 
         f7.input.checkEmptyState(inputEl);
 
         if ((validate || validate === '') && (typeof value !== 'undefined' && value !== null && value !== '' || typeof defaultValue !== 'undefined' && defaultValue !== null && defaultValue !== '')) {
           setTimeout(function () {
-            f7.input.validate(inputEl);
+            self.validateInput(inputEl);
           }, 0);
         }
 
@@ -3090,7 +3239,7 @@
         f7.input.checkEmptyState(inputEl);
 
         if (validate) {
-          f7.input.validate(inputEl);
+          self.validateInput(inputEl);
         }
 
         if (resizable) {
@@ -3108,19 +3257,55 @@
       if (type === 'range' || type === 'toggle') { return; }
       var inputEl = self.$refs.inputEl;
       if (!inputEl) { return; }
-      inputEl.removeEventListener('input:notempty', self.onInputNotEmptyBound, false);
+      inputEl.removeEventListener('input:notempty', self.onInputNotEmpty, false);
 
       if (type === 'textarea' && resizable) {
-        inputEl.removeEventListener('textarea:resze', self.onTextareaResizeBound, false);
+        inputEl.removeEventListener('textarea:resze', self.onTextareaResize, false);
       }
 
       if (clearButton) {
-        inputEl.removeEventListener('input:empty', self.onInputEmptyBound, false);
-        inputEl.removeEventListener('input:clear', self.onInputClearBound, false);
+        inputEl.removeEventListener('input:empty', self.onInputEmpty, false);
+        inputEl.removeEventListener('input:clear', self.onInputClear, false);
       }
     },
 
     methods: {
+      domValue: function domValue() {
+        var self = this;
+        var ref = self.$refs;
+        var inputEl = ref.inputEl;
+        if (!inputEl) { return undefined; }
+        return inputEl.value;
+      },
+
+      inputHasValue: function inputHasValue() {
+        var self = this;
+        var ref = self.props;
+        var value = ref.value;
+        var domValue = self.domValue();
+        return typeof value === 'undefined' ? domValue || domValue === 0 : value || value === 0;
+      },
+
+      validateInput: function validateInput(inputEl) {
+        var self = this;
+        var f7 = self.$f7;
+        if (!f7 || !inputEl) { return; }
+        var validity = inputEl.validity;
+        if (!validity) { return; }
+
+        if (!validity.valid) {
+          if (self.state.inputInvalid !== true) {
+            self.setState({
+              inputInvalid: true
+            });
+          }
+        } else if (self.state.inputInvalid !== false) {
+          self.setState({
+            inputInvalid: false
+          });
+        }
+      },
+
       onTextareaResize: function onTextareaResize(event) {
         this.dispatchEvent('textarea:resize textareaResize', event);
       },
@@ -3138,15 +3323,36 @@
       },
 
       onInput: function onInput(event) {
-        this.dispatchEvent('input', event);
+        var self = this;
+        var ref = self.props;
+        var validate = ref.validate;
+        self.dispatchEvent('input', event);
+
+        if ((validate || validate === '') && self.$refs && self.$refs.inputEl) {
+          self.validateInput(self.$refs.inputEl);
+        }
       },
 
       onFocus: function onFocus(event) {
         this.dispatchEvent('focus', event);
+        this.setState({
+          inputFocused: true
+        });
       },
 
       onBlur: function onBlur(event) {
-        this.dispatchEvent('blur', event);
+        var self = this;
+        var ref = self.props;
+        var validate = ref.validate;
+        self.dispatchEvent('blur', event);
+
+        if ((validate || validate === '') && self.$refs && self.$refs.inputEl) {
+          self.validateInput(self.$refs.inputEl);
+        }
+
+        self.setState({
+          inputFocused: false
+        });
       },
 
       onChange: function onChange(event) {
@@ -3158,6 +3364,10 @@
         while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
 
         __vueComponentDispatchEvent.apply(void 0, [ this, events ].concat( args ));
+      },
+
+      setState: function setState(updater, callback) {
+        __vueComponentSetState(this, updater, callback);
       }
 
     },
@@ -3324,9 +3534,6 @@
         style: style,
         class: self.classes
       }, self.attrs, {
-        on: {
-          click: self.onClick.bind(self)
-        },
         attrs: {
           id: id
         }
@@ -3341,15 +3548,22 @@
       }
     },
 
+    created: function created() {
+      var self = this;
+      self.onClick = self.onClick.bind(self);
+    },
+
     mounted: function mounted() {
       var self = this;
       var el = self.$refs.el;
+      el.addEventListener('click', self.onClick);
       var ref = self.props;
       var tabbarLabel = ref.tabbarLabel;
       var tabLink = ref.tabLink;
       var tooltip = ref.tooltip;
       var smartSelect = ref.smartSelect;
       var smartSelectParams = ref.smartSelectParams;
+      var routeProps = ref.routeProps;
       var isTabbarLabel = false;
 
       if (tabbarLabel || (tabLink || tabLink === '') && self.$$(el).parents('.tabbar-labels').length) {
@@ -3359,6 +3573,7 @@
       self.setState({
         isTabbarLabel: isTabbarLabel
       });
+      if (routeProps) { el.f7RouteProps = routeProps; }
       self.$f7ready(function (f7) {
         if (smartSelect) {
           var ssParams = Utils.extend({
@@ -3376,8 +3591,22 @@
       });
     },
 
+    updated: function updated() {
+      var self = this;
+      var el = self.$refs.el;
+      var ref = self.props;
+      var routeProps = ref.routeProps;
+
+      if (routeProps) {
+        el.f7RouteProps = routeProps;
+      }
+    },
+
     beforeDestroy: function beforeDestroy() {
       var self = this;
+      var el = self.$refs.el;
+      el.removeEventListener('click', self.onClick);
+      delete el.f7RouteProps;
 
       if (self.f7SmartSelect && self.f7SmartSelect.destroy) {
         self.f7SmartSelect.destroy();
@@ -3434,12 +3663,6 @@
     },
     methods: {
       onClick: function onClick(event) {
-        var self = this;
-
-        if (self.props.smartSelect && self.f7SmartSelect) {
-          self.f7SmartSelect.open();
-        }
-
         this.dispatchEvent('click', event);
       },
 
@@ -3490,9 +3713,7 @@
       }, [_h('a', __vueComponentTransformJSXProps(Object.assign({
         class: self.classes
       }, self.attrs, {
-        on: {
-          click: self.onClick.bind(self)
-        }
+        ref: 'linkEl'
       })), [this.$slots['default'] || [title || text]])]);
     },
 
@@ -3532,6 +3753,42 @@
       }
 
     },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      var self = this;
+      var linkEl = self.$refs.linkEl;
+      var ref = self.props;
+      var routeProps = ref.routeProps;
+
+      if (routeProps) {
+        linkEl.f7RouteProps = routeProps;
+      }
+
+      linkEl.addEventListener('click', self.onClick);
+    },
+
+    updated: function updated() {
+      var self = this;
+      var linkEl = self.$refs.linkEl;
+      var ref = self.props;
+      var routeProps = ref.routeProps;
+
+      if (routeProps) {
+        linkEl.f7RouteProps = routeProps;
+      }
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      var self = this;
+      var linkEl = self.$refs.linkEl;
+      linkEl.removeEventListener('click', this.onClick);
+      delete linkEl.f7RouteProps;
+    },
+
     methods: {
       onClick: function onClick(event) {
         this.dispatchEvent('click', event);
@@ -3674,7 +3931,7 @@
     watch: {
       'props.indexes': function watchIndexes() {
         if (!this.f7ListIndex) { return; }
-        this.f7ListIndex.params.indexes = this.indexes;
+        this.f7ListIndex.params.indexes = this.props.indexes;
         this.update();
       }
     },
@@ -3694,6 +3951,475 @@
         while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
 
         __vueComponentDispatchEvent.apply(void 0, [ this, events ].concat( args ));
+      }
+
+    },
+    computed: {
+      props: function props() {
+        return __vueComponentProps(this);
+      }
+
+    }
+  };
+
+  var f7ListInput = {
+    name: 'f7-list-input',
+    props: Object.assign({
+      id: [String, Number],
+      sortable: Boolean,
+      media: String,
+      tag: {
+        type: String,
+        default: 'li'
+      },
+      input: {
+        type: Boolean,
+        default: true
+      },
+      type: {
+        type: String,
+        default: 'text'
+      },
+      name: String,
+      value: [String, Number, Array],
+      defaultValue: [String, Number, Array],
+      readonly: Boolean,
+      required: Boolean,
+      disabled: Boolean,
+      placeholder: String,
+      inputId: [String, Number],
+      size: [String, Number],
+      accept: [String, Number],
+      autocomplete: [String],
+      autocorrect: [String],
+      autocapitalize: [String],
+      spellcheck: [String],
+      autofocus: Boolean,
+      autosave: String,
+      max: [String, Number],
+      min: [String, Number],
+      step: [String, Number],
+      maxlength: [String, Number],
+      minlength: [String, Number],
+      multiple: Boolean,
+      inputStyle: [String, Object],
+      pattern: String,
+      validate: [Boolean, String],
+      tabindex: [String, Number],
+      resizable: Boolean,
+      clearButton: Boolean,
+      noFormStoreData: Boolean,
+      noStoreData: Boolean,
+      ignoreStoreData: Boolean,
+      errorMessage: String,
+      errorMessageForce: Boolean,
+      info: String,
+      label: [String, Number],
+      inlineLabel: Boolean,
+      floatingLabel: Boolean
+    }, Mixins.colorProps),
+
+    data: function data() {
+      var props = __vueComponentProps(this);
+
+      var state = (function () {
+        return {
+          isSortable: props.sortable,
+          inputFocused: false,
+          inputInvalid: false
+        };
+      })();
+
+      return {
+        state: state
+      };
+    },
+
+    render: function render() {
+      var _h = this.$createElement;
+      var self = this;
+      var ref = self.state;
+      var inputFocused = ref.inputFocused;
+      var inputInvalid = ref.inputInvalid;
+      var props = self.props;
+      var id = props.id;
+      var style = props.style;
+      var className = props.className;
+      var sortable = props.sortable;
+      var media = props.media;
+      var renderInput = props.input;
+      var tag = props.tag;
+      var type = props.type;
+      var name = props.name;
+      var value = props.value;
+      var defaultValue = props.defaultValue;
+      var readonly = props.readonly;
+      var required = props.required;
+      var disabled = props.disabled;
+      var placeholder = props.placeholder;
+      var inputId = props.inputId;
+      var size = props.size;
+      var accept = props.accept;
+      var autocomplete = props.autocomplete;
+      var autocorrect = props.autocorrect;
+      var autocapitalize = props.autocapitalize;
+      var spellcheck = props.spellcheck;
+      var autofocus = props.autofocus;
+      var autosave = props.autosave;
+      var max = props.max;
+      var min = props.min;
+      var step = props.step;
+      var maxlength = props.maxlength;
+      var minlength = props.minlength;
+      var multiple = props.multiple;
+      var inputStyle = props.inputStyle;
+      var pattern = props.pattern;
+      var validate = props.validate;
+      var tabindex = props.tabindex;
+      var resizable = props.resizable;
+      var clearButton = props.clearButton;
+      var noFormStoreData = props.noFormStoreData;
+      var noStoreData = props.noStoreData;
+      var ignoreStoreData = props.ignoreStoreData;
+      var errorMessage = props.errorMessage;
+      var errorMessageForce = props.errorMessageForce;
+      var info = props.info;
+      var label = props.label;
+      var inlineLabel = props.inlineLabel;
+      var floatingLabel = props.floatingLabel;
+      var domValue = self.domValue();
+      var inputHasValue = self.inputHasValue();
+      var isSortable = sortable || self.state.isSortable;
+
+      var createInput = function (InputTag, children) {
+        var needsValue = type !== 'file';
+        var needsType = InputTag === 'input';
+        var inputClassName = Utils.classNames({
+          resizable: type === 'textarea' && resizable,
+          'no-store-data': noFormStoreData || noStoreData || ignoreStoreData,
+          'input-invalid': errorMessage && errorMessageForce || inputInvalid,
+          'input-with-value': inputHasValue,
+          'input-focused': inputFocused
+        });
+        var input;
+        var inputValue;
+
+        if (needsValue) {
+          if (typeof value !== 'undefined') { inputValue = value; }else { inputValue = domValue; }
+        }
+
+        var valueProps = {};
+        if ('value' in props) { valueProps.value = inputValue; }
+        if ('defaultValue' in props) { valueProps.defaultValue = defaultValue; }
+        {
+          input = _h(InputTag, {
+            ref: 'inputEl',
+            style: inputStyle,
+            class: inputClassName,
+            domProps: Object.assign({
+              disabled: disabled,
+              readOnly: readonly,
+              multiple: multiple,
+              required: required
+            }, valueProps),
+            on: {
+              focus: self.onFocus,
+              blur: self.onBlur,
+              input: self.onInput,
+              change: self.onChange
+            },
+            attrs: {
+              name: name,
+              type: needsType ? type : undefined,
+              placeholder: placeholder,
+              id: inputId,
+              size: size,
+              accept: accept,
+              autocomplete: autocomplete,
+              autocorrect: autocorrect,
+              autocapitalize: autocapitalize,
+              spellcheck: spellcheck,
+              autofocus: autofocus,
+              autoSave: autosave,
+              max: max,
+              maxlength: maxlength,
+              min: min,
+              minlength: minlength,
+              step: step,
+              pattern: pattern,
+              validate: typeof validate === 'string' && validate.length ? validate : undefined,
+              'data-validate': validate === true || validate === '' ? true : undefined,
+              tabindex: tabindex,
+              'data-error-message': errorMessageForce ? undefined : errorMessage
+            }
+          }, [children]);
+        }
+        return input;
+      };
+
+      var inputEl;
+
+      if (renderInput) {
+        if (type === 'select' || type === 'textarea' || type === 'file') {
+          if (type === 'select') {
+            inputEl = createInput('select', self.$slots.default);
+          } else if (type === 'file') {
+            inputEl = createInput('input');
+          } else {
+            inputEl = createInput('textarea');
+          }
+        } else {
+          inputEl = createInput('input');
+        }
+      }
+
+      var hasErrorMessage = !!errorMessage || self.$slots['error-message'] && self.$slots['error-message'].length;
+      var ItemTag = tag;
+      return _h(ItemTag, {
+        ref: 'el',
+        style: style,
+        class: Utils.classNames(className, {
+          disabled: disabled
+        }, Mixins.colorClasses(props)),
+        attrs: {
+          id: id
+        }
+      }, [this.$slots['root-start'], _h('div', {
+        class: Utils.classNames('item-content item-input', {
+          'inline-label': inlineLabel,
+          'item-input-focused': inputFocused,
+          'item-input-with-info': !!info || self.$slots.info && self.$slots.info.length,
+          'item-input-with-value': inputHasValue,
+          'item-input-with-error-message': hasErrorMessage && errorMessageForce || inputInvalid,
+          'item-input-invalid': hasErrorMessage && errorMessageForce || inputInvalid
+        })
+      }, [this.$slots['content-start'], (media || self.$slots.media) && _h('div', {
+        class: 'item-media'
+      }, [media && _h('img', {
+        attrs: {
+          src: media
+        }
+      }), this.$slots['media']]), _h('div', {
+        class: 'item-inner'
+      }, [this.$slots['inner-start'], (label || self.$slots.label) && _h('div', {
+        class: Utils.classNames('item-title item-label', {
+          'item-floating-label': floatingLabel
+        })
+      }, [label, this.$slots['label']]), _h('div', {
+        class: Utils.classNames('item-input-wrap', {
+          'input-dropdown': type === 'select'
+        })
+      }, [inputEl, this.$slots['input'], hasErrorMessage && errorMessageForce && _h('div', {
+        class: 'item-input-error-message'
+      }, [errorMessage, this.$slots['error-message']]), clearButton && _h('span', {
+        class: 'input-clear-button'
+      }), (info || self.$slots.info) && _h('div', {
+        class: 'item-input-info'
+      }, [info, this.$slots['info']])]), this.$slots['inner'], this.$slots['inner-end']]), this.$slots['content'], this.$slots['content-end']]), isSortable && _h('div', {
+        class: 'sortable-handler'
+      }), this.$slots['root'], this.$slots['root-end']]);
+    },
+
+    watch: {
+      'props.value': function watchValue() {
+        var self = this;
+        if (!self.$f7) { return; }
+        self.updateInputOnDidUpdate = true;
+      }
+    },
+
+    created: function created() {
+      var self = this;
+      self.onChange = self.onChange.bind(self);
+      self.onInput = self.onInput.bind(self);
+      self.onFocus = self.onFocus.bind(self);
+      self.onBlur = self.onBlur.bind(self);
+      self.onTextareaResize = self.onTextareaResize.bind(self);
+      self.onInputNotEmpty = self.onInputNotEmpty.bind(self);
+      self.onInputEmpty = self.onInputEmpty.bind(self);
+      self.onInputClear = self.onInputClear.bind(self);
+    },
+
+    mounted: function mounted() {
+      var self = this;
+      var el = self.$refs.el;
+      if (!el) { return; }
+      self.$f7ready(function (f7) {
+        var ref = self.props;
+        var validate = ref.validate;
+        var resizable = ref.resizable;
+        var value = ref.value;
+        var defaultValue = ref.defaultValue;
+        var type = ref.type;
+        var inputEl = self.$refs.inputEl;
+        if (!inputEl) { return; }
+        inputEl.addEventListener('input:notempty', self.onInputNotEmpty, false);
+        inputEl.addEventListener('textarea:resze', self.onTextareaResize, false);
+        inputEl.addEventListener('input:empty', self.onInputEmpty, false);
+        inputEl.addEventListener('input:clear', self.onInputClear, false);
+
+        if ((validate || validate === '') && (typeof value !== 'undefined' && value !== null && value !== '' || typeof defaultValue !== 'undefined' && defaultValue !== null && defaultValue !== '')) {
+          setTimeout(function () {
+            self.validateInput(inputEl);
+          }, 0);
+        }
+
+        if (type === 'textarea' && resizable) {
+          f7.input.resizeTextarea(inputEl);
+        }
+      });
+      self.$listEl = self.$$(el).parents('.list, .list-group').eq(0);
+
+      if (self.$listEl.length) {
+        self.setState({
+          isSortable: self.$listEl.hasClass('sortable')
+        });
+      }
+    },
+
+    updated: function updated() {
+      var self = this;
+      var $listEl = self.$listEl;
+      if (!$listEl || $listEl && $listEl.length === 0) { return; }
+      var isSortable = $listEl.hasClass('sortable');
+
+      if (isSortable !== self.state.isSortable) {
+        self.setState({
+          isSortable: isSortable
+        });
+      }
+
+      var ref = self.props;
+      var validate = ref.validate;
+      var resizable = ref.resizable;
+      var type = ref.type;
+      var f7 = self.$f7;
+      if (!f7) { return; }
+
+      if (self.updateInputOnDidUpdate) {
+        var inputEl = self.$refs.inputEl;
+        if (!inputEl) { return; }
+        self.updateInputOnDidUpdate = false;
+
+        if (validate) {
+          self.validateInput(inputEl);
+        }
+
+        if (type === 'textarea' && resizable) {
+          f7.input.resizeTextarea(inputEl);
+        }
+      }
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      var self = this;
+      var inputEl = self.$refs.inputEl;
+      if (!inputEl) { return; }
+      inputEl.removeEventListener('input:notempty', self.onInputNotEmpty, false);
+      inputEl.removeEventListener('textarea:resze', self.onTextareaResize, false);
+      inputEl.removeEventListener('input:empty', self.onInputEmpty, false);
+      inputEl.removeEventListener('input:clear', self.onInputClear, false);
+    },
+
+    methods: {
+      domValue: function domValue() {
+        var self = this;
+        var ref = self.$refs;
+        var inputEl = ref.inputEl;
+        if (!inputEl) { return undefined; }
+        return inputEl.value;
+      },
+
+      inputHasValue: function inputHasValue() {
+        var self = this;
+        var ref = self.props;
+        var value = ref.value;
+        var domValue = self.domValue();
+        return typeof value === 'undefined' ? domValue || domValue === 0 : value || value === 0;
+      },
+
+      validateInput: function validateInput(inputEl) {
+        var self = this;
+        var f7 = self.$f7;
+        if (!f7 || !inputEl) { return; }
+        var validity = inputEl.validity;
+        if (!validity) { return; }
+
+        if (!validity.valid) {
+          if (self.state.inputInvalid !== true) {
+            self.setState({
+              inputInvalid: true
+            });
+          }
+        } else if (self.state.inputInvalid !== false) {
+          self.setState({
+            inputInvalid: false
+          });
+        }
+      },
+
+      onTextareaResize: function onTextareaResize(event) {
+        this.dispatchEvent('textarea:resize textareaResize', event);
+      },
+
+      onInputNotEmpty: function onInputNotEmpty(event) {
+        this.dispatchEvent('input:notempty inputNotEmpty', event);
+      },
+
+      onInputEmpty: function onInputEmpty(event) {
+        this.dispatchEvent('input:empty inputEmpty', event);
+      },
+
+      onInputClear: function onInputClear(event) {
+        this.dispatchEvent('input:clear inputClear', event);
+      },
+
+      onInput: function onInput(event) {
+        var self = this;
+        var ref = self.props;
+        var validate = ref.validate;
+        self.dispatchEvent('input', event);
+
+        if ((validate || validate === '') && self.$refs && self.$refs.inputEl) {
+          self.validateInput(self.$refs.inputEl);
+        }
+      },
+
+      onFocus: function onFocus(event) {
+        this.dispatchEvent('focus', event);
+        this.setState({
+          inputFocused: true
+        });
+      },
+
+      onBlur: function onBlur(event) {
+        var self = this;
+        var ref = self.props;
+        var validate = ref.validate;
+        self.dispatchEvent('blur', event);
+
+        if ((validate || validate === '') && self.$refs && self.$refs.inputEl) {
+          self.validateInput(self.$refs.inputEl);
+        }
+
+        self.setState({
+          inputFocused: false
+        });
+      },
+
+      onChange: function onChange(event) {
+        this.dispatchEvent('change', event);
+      },
+
+      dispatchEvent: function dispatchEvent(events) {
+        var args = [], len = arguments.length - 1;
+        while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
+
+        __vueComponentDispatchEvent.apply(void 0, [ this, events ].concat( args ));
+      },
+
+      setState: function setState(updater, callback) {
+        __vueComponentSetState(this, updater, callback);
       }
 
     },
@@ -3772,7 +4498,10 @@
           hasInput: false,
           hasInlineLabel: false,
           hasInputInfo: false,
-          hasInputErrorMessage: false
+          hasInputErrorMessage: false,
+          hasInputValue: false,
+          hasInputFocused: false,
+          hasInputInvalid: false
         };
       })();
 
@@ -3811,6 +4540,9 @@
       var itemInput = props.itemInput;
       var inlineLabel = props.inlineLabel;
       var itemInputWithInfo = props.itemInputWithInfo;
+      var hasInputFocused = self.state.hasInputFocused;
+      var hasInputInvalid = self.state.hasInputInvalid;
+      var hasInputValue = self.state.hasInputValue;
       var hasInput = itemInput || self.state.hasInput;
       var hasInlineLabel = inlineLabel || self.state.hasInlineLabel;
       var hasInputInfo = itemInputWithInfo || self.state.hasInputInfo;
@@ -3863,6 +4595,14 @@
             hasInput = true;
             if (child.data && child.data.info) { hasInputInfo = true; }
             if (child.data && child.data.errorMessage && child.data.errorMessageForce) { hasInputErrorMessage = true; }
+
+            if (!hasInputValue) {
+              if (child.data && (typeof child.data.value === 'undefined' ? child.data.defaultValue || child.data.defaultValue === 0 : child.data.value || child.data.value === 0)) {
+                hasInputValue = true;
+              } else if (child.componentOptions && child.componentOptions.propsData && (typeof child.componentOptions.propsData.value === 'undefined' ? child.componentOptions.propsData.defaultValue || child.componentOptions.propsData.defaultValue === 0 : child.componentOptions.propsData.value || child.componentOptions.propsData.value === 0)) {
+                hasInputValue = true;
+              }
+            }
           }
 
           if (tag && tag.indexOf('f7-label') >= 0) {
@@ -3900,6 +4640,9 @@
               disabled: disabled,
               required: required,
               value: value
+            },
+            on: {
+              change: this.onChange
             },
             attrs: {
               name: name,
@@ -4001,15 +4744,14 @@
         'inline-label': hasInlineLabel,
         'item-input-with-info': hasInputInfo,
         'item-input-with-error-message': hasInputErrorMessage,
-        'item-input-invalid': hasInputErrorMessage
+        'item-input-invalid': hasInputInvalid,
+        'item-input-with-value': hasInputValue,
+        'item-input-focused': hasInputFocused
       }, Mixins.colorClasses(props));
       return _h(ItemContentTag, {
         ref: 'el',
         style: style,
         class: classes,
-        on: {
-          click: self.onClickBound
-        },
         attrs: {
           id: id
         }
@@ -4018,8 +4760,12 @@
 
     created: function created() {
       var self = this;
-      self.onClickBound = self.onClick.bind(self);
-      self.onChangeBound = self.onChange.bind(self);
+      self.onClick = self.onClick.bind(self);
+      self.onChange = self.onChange.bind(self);
+      self.onFocus = self.onFocus.bind(self);
+      self.onBlur = self.onBlur.bind(self);
+      self.onEmpty = self.onEmpty.bind(self);
+      self.onNotEmpty = self.onNotEmpty.bind(self);
     },
 
     beforeMount: function beforeMount() {
@@ -4034,12 +4780,9 @@
       var self = this;
       var ref = self.$refs;
       var innerEl = ref.innerEl;
+      var el = ref.el;
       var inputEl = ref.inputEl;
-
-      if (inputEl) {
-        inputEl.addEventListener('change', self.onChangeBound);
-      }
-
+      el.addEventListener('click', self.onClick);
       if (!innerEl) { return; }
       var $innerEl = self.$$(innerEl);
       var $labelEl = $innerEl.children('.item-title.item-label');
@@ -4048,6 +4791,14 @@
       var hasInput = $inputWrapEl.length > 0;
       var hasInputInfo = $inputWrapEl.children('.item-input-info').length > 0;
       var hasInputErrorMessage = $inputWrapEl.children('.item-input-error-message').length > 0;
+      var hasInputInvalid = $inputWrapEl.children('.input-invalid').length > 0;
+
+      if (hasInput) {
+        el.addEventListener('focus', self.onFocus, true);
+        el.addEventListener('blur', self.onBlur, true);
+        el.addEventListener('input:empty', self.onEmpty);
+        el.addEventListener('input:notempty', self.onNotEmpty);
+      }
 
       if (!self.hasInlineLabelSet && hasInlineLabel !== self.state.hasInlineLabel) {
         self.setState({
@@ -4072,11 +4823,18 @@
           hasInputErrorMessage: hasInputErrorMessage
         });
       }
+
+      if (!self.hasInputInvalidSet && hasInputInvalid !== self.state.hasInputInvalid) {
+        self.setState({
+          hasInputInvalid: hasInputInvalid
+        });
+      }
     },
 
     updated: function updated() {
       var self = this;
-      var innerEl = self.$refs.innerEl;
+      var ref = self.$refs;
+      var innerEl = ref.innerEl;
       if (!innerEl) { return; }
       var $innerEl = self.$$(innerEl);
       var $labelEl = $innerEl.children('.item-title.item-label');
@@ -4085,6 +4843,7 @@
       var hasInput = $inputWrapEl.length > 0;
       var hasInputInfo = $inputWrapEl.children('.item-input-info').length > 0;
       var hasInputErrorMessage = $inputWrapEl.children('.item-input-error-message').length > 0;
+      var hasInputInvalid = $inputWrapEl.children('.input-invalid').length > 0;
 
       if (hasInlineLabel !== self.state.hasInlineLabel) {
         self.setState({
@@ -4109,16 +4868,23 @@
           hasInputErrorMessage: hasInputErrorMessage
         });
       }
+
+      if (hasInputInvalid !== self.state.hasInputInvalid) {
+        self.setState({
+          hasInputInvalid: hasInputInvalid
+        });
+      }
     },
 
     beforeDestroy: function beforeDestroy() {
       var self = this;
       var ref = self.$refs;
-      var inputEl = ref.inputEl;
-
-      if (inputEl) {
-        inputEl.removeEventListener('change', self.onChangeBound);
-      }
+      var el = ref.el;
+      el.removeEventListener('click', self.onClick);
+      el.removeEventListener('input:empty', self.onEmpty);
+      el.removeEventListener('input:notempty', self.onNotEmpty);
+      el.removeEventListener('focus', self.onFocus, true);
+      el.removeEventListener('blur', self.onBlur, true);
     },
 
     methods: {
@@ -4176,6 +4942,30 @@
 
       onChange: function onChange(event) {
         this.dispatchEvent('change', event);
+      },
+
+      onFocus: function onFocus() {
+        this.setState({
+          hasInputFocused: true
+        });
+      },
+
+      onBlur: function onBlur() {
+        this.setState({
+          hasInputFocused: false
+        });
+      },
+
+      onEmpty: function onEmpty() {
+        this.setState({
+          hasInputValue: false
+        });
+      },
+
+      onNotEmpty: function onNotEmpty() {
+        this.setState({
+          hasInputValue: true
+        });
       },
 
       dispatchEvent: function dispatchEvent(events) {
@@ -4269,7 +5059,8 @@
       disabled: Boolean,
       itemInput: Boolean,
       itemInputWithInfo: Boolean,
-      inlineLabel: Boolean
+      inlineLabel: Boolean,
+      virtualListIndex: Number
     }, Mixins.colorProps, Mixins.linkRouterProps, Mixins.linkActionsProps),
 
     data: function data() {
@@ -4334,6 +5125,7 @@
       var sortable = props.sortable;
       var noChevron = props.noChevron;
       var chevronCenter = props.chevronCenter;
+      var virtualListIndex = props.virtualListIndex;
       var isMedia = mediaItem || mediaList || self.state.isMedia;
       var isSortable = sortable || self.state.isSortable;
       var isSimple = self.state.isSimple;
@@ -4342,8 +5134,8 @@
         var needsEvents = !(link || href || accordionItem || smartSelect);
         itemContentEl = _h(F7ListItemContent, {
           on: needsEvents ? {
-            click: self.onClickBound,
-            change: self.onChangeBound
+            click: self.onClick,
+            change: self.onChange
           } : undefined,
           attrs: {
             title: title,
@@ -4383,12 +5175,9 @@
             'smart-select': smartSelect
           }, Mixins.linkRouterClasses(props), Mixins.linkActionsClasses(props));
           linkEl = _h('a', __vueComponentTransformJSXProps(Object.assign({
+            ref: 'linkEl',
             class: linkClasses
-          }, linkAttrs, {
-            on: {
-              click: self.onClick.bind(self)
-            }
-          })), [itemContentEl]);
+          }, linkAttrs)), [itemContentEl]);
         }
       }
 
@@ -4410,7 +5199,8 @@
           style: style,
           class: liClasses,
           attrs: {
-            id: id
+            id: id,
+            'data-virtual-list-index': virtualListIndex
           }
         }, [_h('span', [this.$slots['default'] || [title]])]);
       }
@@ -4421,7 +5211,8 @@
           style: style,
           class: liClasses,
           attrs: {
-            id: id
+            id: id,
+            'data-virtual-list-index': virtualListIndex
           }
         }, [title, this.$slots['default']]);
       }
@@ -4432,7 +5223,8 @@
         style: style,
         class: liClasses,
         attrs: {
-          id: id
+          id: id,
+          'data-virtual-list-index': virtualListIndex
         }
       }, [this.$slots['root-start'], swipeout ? _h('div', {
         class: 'swipeout-content'
@@ -4457,25 +5249,50 @@
 
     created: function created() {
       var self = this;
-      self.onClickBound = self.onClick.bind(self);
-      self.onChangeBound = self.onChange.bind(self);
-      self.onSwipeoutOpenBound = self.onSwipeoutOpen.bind(self);
-      self.onSwipeoutOpenedBound = self.onSwipeoutOpened.bind(self);
-      self.onSwipeoutCloseBound = self.onSwipeoutClose.bind(self);
-      self.onSwipeoutClosedBound = self.onSwipeoutClosed.bind(self);
-      self.onSwipeoutDeleteBound = self.onSwipeoutDelete.bind(self);
-      self.onSwipeoutDeletedBound = self.onSwipeoutDeleted.bind(self);
-      self.onSwipeoutBound = self.onSwipeout.bind(self);
-      self.onAccOpenBound = self.onAccOpen.bind(self);
-      self.onAccOpenedBound = self.onAccOpened.bind(self);
-      self.onAccCloseBound = self.onAccClose.bind(self);
-      self.onAccClosedBound = self.onAccClosed.bind(self);
+      self.onClick = self.onClick.bind(self);
+      self.onChange = self.onChange.bind(self);
+      self.onSwipeoutOpen = self.onSwipeoutOpen.bind(self);
+      self.onSwipeoutOpened = self.onSwipeoutOpened.bind(self);
+      self.onSwipeoutClose = self.onSwipeoutClose.bind(self);
+      self.onSwipeoutClosed = self.onSwipeoutClosed.bind(self);
+      self.onSwipeoutDelete = self.onSwipeoutDelete.bind(self);
+      self.onSwipeoutDeleted = self.onSwipeoutDeleted.bind(self);
+      self.onSwipeoutOverswipeEnter = self.onSwipeoutOverswipeEnter.bind(self);
+      self.onSwipeoutOverswipeExit = self.onSwipeoutOverswipeExit.bind(self);
+      self.onSwipeout = self.onSwipeout.bind(self);
+      self.onAccBeforeOpen = self.onAccBeforeOpen.bind(self);
+      self.onAccOpen = self.onAccOpen.bind(self);
+      self.onAccOpened = self.onAccOpened.bind(self);
+      self.onAccBeforeClose = self.onAccBeforeClose.bind(self);
+      self.onAccClose = self.onAccClose.bind(self);
+      self.onAccClosed = self.onAccClosed.bind(self);
     },
 
     mounted: function mounted() {
       var self = this;
-      var el = self.$refs.el;
+      var ref = self.$refs;
+      var el = ref.el;
+      var linkEl = ref.linkEl;
       if (!el) { return; }
+      var ref$1 = self.props;
+      var link = ref$1.link;
+      var href = ref$1.href;
+      var smartSelect = ref$1.smartSelect;
+      var swipeout = ref$1.swipeout;
+      var swipeoutOpened = ref$1.swipeoutOpened;
+      var accordionItem = ref$1.accordionItem;
+      var smartSelectParams = ref$1.smartSelectParams;
+      var routeProps = ref$1.routeProps;
+      var needsEvents = !(link || href || accordionItem || smartSelect);
+
+      if (!needsEvents && linkEl) {
+        linkEl.addEventListener('click', self.onClick);
+      }
+
+      if (linkEl && routeProps) {
+        linkEl.f7RouteProps = routeProps;
+      }
+
       self.$listEl = self.$$(el).parents('.list, .list-group').eq(0);
 
       if (self.$listEl.length) {
@@ -4486,28 +5303,25 @@
         });
       }
 
-      var ref = self.props;
-      var swipeout = ref.swipeout;
-      var swipeoutOpened = ref.swipeoutOpened;
-      var accordionItem = ref.accordionItem;
-      var smartSelect = ref.smartSelect;
-      var smartSelectParams = ref.smartSelectParams;
-
       if (swipeout) {
-        el.addEventListener('swipeout:open', self.onSwipeoutOpenBound);
-        el.addEventListener('swipeout:opened', self.onSwipeoutOpenedBound);
-        el.addEventListener('swipeout:close', self.onSwipeoutCloseBound);
-        el.addEventListener('swipeout:closed', self.onSwipeoutClosedBound);
-        el.addEventListener('swipeout:delete', self.onSwipeoutDeleteBound);
-        el.addEventListener('swipeout:deleted', self.onSwipeoutDeletedBound);
-        el.addEventListener('swipeout', self.onSwipeoutBound);
+        el.addEventListener('swipeout:open', self.onSwipeoutOpen);
+        el.addEventListener('swipeout:opened', self.onSwipeoutOpened);
+        el.addEventListener('swipeout:close', self.onSwipeoutClose);
+        el.addEventListener('swipeout:closed', self.onSwipeoutClosed);
+        el.addEventListener('swipeout:delete', self.onSwipeoutDelete);
+        el.addEventListener('swipeout:deleted', self.onSwipeoutDeleted);
+        el.addEventListener('swipeout:overswipeenter', self.onSwipeoutOverswipeEnter);
+        el.addEventListener('swipeout:overswipeexit', self.onSwipeoutOverswipeExit);
+        el.addEventListener('swipeout', self.onSwipeout);
       }
 
       if (accordionItem) {
-        el.addEventListener('accordion:open', self.onAccOpenBound);
-        el.addEventListener('accordion:opened', self.onAccOpenedBound);
-        el.addEventListener('accordion:close', self.onAccCloseBound);
-        el.addEventListener('accordion:closed', self.onAccClosedBound);
+        el.addEventListener('accordion:beforeopen', self.onAccBeforeOpen);
+        el.addEventListener('accordion:open', self.onAccOpen);
+        el.addEventListener('accordion:opened', self.onAccOpened);
+        el.addEventListener('accordion:beforeclose', self.onAccBeforeClose);
+        el.addEventListener('accordion:close', self.onAccClose);
+        el.addEventListener('accordion:closed', self.onAccClosed);
       }
 
       self.$f7ready(function (f7) {
@@ -4527,6 +5341,15 @@
     updated: function updated() {
       var self = this;
       var $listEl = self.$listEl;
+      var ref = self.$refs;
+      var linkEl = ref.linkEl;
+      var ref$1 = self.props;
+      var routeProps = ref$1.routeProps;
+
+      if (linkEl && routeProps) {
+        linkEl.f7RouteProps = routeProps;
+      }
+
       if (!$listEl || $listEl && $listEl.length === 0) { return; }
       var isMedia = $listEl.hasClass('media-list');
       var isSimple = $listEl.hasClass('simple-list');
@@ -4553,28 +5376,45 @@
 
     beforeDestroy: function beforeDestroy() {
       var self = this;
-      var el = self.$refs.el;
-      var ref = self.props;
-      var swipeout = ref.swipeout;
-      var accordionItem = ref.accordionItem;
-      var smartSelect = ref.smartSelect;
+      var ref = self.$refs;
+      var el = ref.el;
+      var linkEl = ref.linkEl;
+      var ref$1 = self.props;
+      var link = ref$1.link;
+      var href = ref$1.href;
+      var smartSelect = ref$1.smartSelect;
+      var swipeout = ref$1.swipeout;
+      var accordionItem = ref$1.accordionItem;
+      var needsEvents = !(link || href || accordionItem || smartSelect);
+
+      if (linkEl) {
+        if (!needsEvents) {
+          linkEl.removeEventListener('click', self.onClick);
+        }
+
+        delete linkEl.f7RouteProps;
+      }
 
       if (el) {
         if (swipeout) {
-          el.removeEventListener('swipeout:open', self.onSwipeoutOpenBound);
-          el.removeEventListener('swipeout:opened', self.onSwipeoutOpenedBound);
-          el.removeEventListener('swipeout:close', self.onSwipeoutCloseBound);
-          el.removeEventListener('swipeout:closed', self.onSwipeoutClosedBound);
-          el.removeEventListener('swipeout:delete', self.onSwipeoutDeleteBound);
-          el.removeEventListener('swipeout:deleted', self.onSwipeoutDeletedBound);
-          el.removeEventListener('swipeout', self.onSwipeoutBound);
+          el.removeEventListener('swipeout:open', self.onSwipeoutOpen);
+          el.removeEventListener('swipeout:opened', self.onSwipeoutOpened);
+          el.removeEventListener('swipeout:close', self.onSwipeoutClose);
+          el.removeEventListener('swipeout:closed', self.onSwipeoutClosed);
+          el.removeEventListener('swipeout:delete', self.onSwipeoutDelete);
+          el.removeEventListener('swipeout:deleted', self.onSwipeoutDeleted);
+          el.removeEventListener('swipeout:overswipeenter', self.onSwipeoutOverswipeEnter);
+          el.removeEventListener('swipeout:overswipeexit', self.onSwipeoutOverswipeExit);
+          el.removeEventListener('swipeout', self.onSwipeout);
         }
 
         if (accordionItem) {
-          el.removeEventListener('accordion:open', self.onAccOpenBound);
-          el.removeEventListener('accordion:opened', self.onAccOpenedBound);
-          el.removeEventListener('accordion:close', self.onAccCloseBound);
-          el.removeEventListener('accordion:closed', self.onAccClosedBound);
+          el.removeEventListener('accordion:beforeopen', self.onAccBeforeOpen);
+          el.removeEventListener('accordion:open', self.onAccOpen);
+          el.removeEventListener('accordion:opened', self.onAccOpened);
+          el.removeEventListener('accordion:beforeclose', self.onAccBeforeClose);
+          el.removeEventListener('accordion:close', self.onAccClose);
+          el.removeEventListener('accordion:closed', self.onAccClosed);
         }
       }
 
@@ -4590,6 +5430,14 @@
         if (event.target.tagName.toLowerCase() !== 'input') {
           self.dispatchEvent('click', event);
         }
+      },
+
+      onSwipeoutOverswipeEnter: function onSwipeoutOverswipeEnter(event) {
+        this.dispatchEvent('swipeout:overswipeenter swipeoutOverswipeEnter', event);
+      },
+
+      onSwipeoutOverswipeExit: function onSwipeoutOverswipeExit(event) {
+        this.dispatchEvent('swipeout:overswipeexit swipeoutOverswipeExit', event);
       },
 
       onSwipeoutDeleted: function onSwipeoutDeleted(event) {
@@ -4620,12 +5468,20 @@
         this.dispatchEvent('swipeout', event);
       },
 
+      onAccBeforeClose: function onAccBeforeClose(event) {
+        this.dispatchEvent('accordion:beforeclose accordionBeforeClose', event, event.detail.prevent);
+      },
+
       onAccClose: function onAccClose(event) {
         this.dispatchEvent('accordion:close accordionClose', event);
       },
 
       onAccClosed: function onAccClosed(event) {
         this.dispatchEvent('accordion:closed accordionClosed', event);
+      },
+
+      onAccBeforeOpen: function onAccBeforeOpen(event) {
+        this.dispatchEvent('accordion:beforeopen accordionBeforeOpen', event, event.detail.prevent);
       },
 
       onAccOpen: function onAccOpen(event) {
@@ -4716,7 +5572,7 @@
           tag = child.tag;
         }
 
-        if (!tag && 'vue' === 'react' || tag && !(tag === 'li' || tag === 'F7ListItem' || tag === 'F7ListButton' || tag.indexOf('list-item') >= 0 || tag.indexOf('list-button') >= 0 || tag.indexOf('f7-list-item') >= 0 || tag.indexOf('f7-list-button') >= 0)) {
+        if (!tag && 'vue' === 'react' || tag && !(tag === 'li' || tag === 'F7ListItem' || tag === 'F7ListButton' || tag === 'F7ListInput' || tag.indexOf('list-item') >= 0 || tag.indexOf('list-button') >= 0 || tag.indexOf('list-input') >= 0 || tag.indexOf('f7-list-item') >= 0 || tag.indexOf('f7-list-button') >= 0 || tag.indexOf('f7-list-input') >= 0)) {
           if (wasUlChild) { rootChildrenAfterList.push(child); }else { rootChildrenBeforeList.push(child); }
         } else if (tag) {
           wasUlChild = true;
@@ -5092,16 +5948,6 @@
       typing: Boolean
     }, Mixins.colorProps),
 
-    created: function created() {
-      this.onClickBound = this.onClick.bind(this);
-      this.onNameClickBound = this.onNameClick.bind(this);
-      this.onTextClickBound = this.onTextClick.bind(this);
-      this.onAvatarClickBound = this.onAvatarClick.bind(this);
-      this.onHeaderClickBound = this.onHeaderClick.bind(this);
-      this.onFooterClickBound = this.onFooterClick.bind(this);
-      this.onBubbleClickBound = this.onBubbleClick.bind(this);
-    },
-
     render: function render() {
       var _h = this.$createElement;
       var self = this;
@@ -5134,39 +5980,29 @@
       var slotsBubbleStart = ref['bubble-start'];
       var slotsBubbleEnd = ref['bubble-end'];
       return _h('div', {
+        ref: 'el',
         style: style,
         class: self.classes,
-        on: {
-          click: self.onClickBound
-        },
         attrs: {
           id: id
         }
       }, [slotsStart, (avatar || slotsAvatar) && _h('div', {
+        ref: 'avatarEl',
         class: 'message-avatar',
         style: {
           backgroundImage: avatar && ("url(" + avatar + ")")
-        },
-        on: {
-          click: self.onAvatarClickBound
         }
       }, [slotsAvatar]), _h('div', {
         class: 'message-content'
       }, [slotsContentStart, (slotsName || name) && _h('div', {
-        class: 'message-name',
-        on: {
-          click: self.onNameClickBound
-        }
+        ref: 'nameEl',
+        class: 'message-name'
       }, [slotsName || name]), (slotsHeader || header) && _h('div', {
-        class: 'message-header',
-        on: {
-          click: self.onHeaderClickBound
-        }
+        ref: 'headerEl',
+        class: 'message-header'
       }, [slotsHeader || header]), _h('div', {
-        class: 'message-bubble',
-        on: {
-          click: self.onBubbleClickBound
-        }
+        ref: 'bubbleEl',
+        class: 'message-bubble'
       }, [slotsBubbleStart, (slotsImage || image) && _h('div', {
         class: 'message-image'
       }, [slotsImage || _h('img', {
@@ -5176,19 +6012,15 @@
       })]), (slotsTextHeader || textHeader) && _h('div', {
         class: 'message-text-header'
       }, [slotsTextHeader || textHeader]), (slotsText || text || typing) && _h('div', {
-        class: 'message-text',
-        on: {
-          click: self.onTextClickBound
-        }
+        ref: 'textEl',
+        class: 'message-text'
       }, [slotsText || text, typing && _h('div', {
         class: 'message-typing-indicator'
       }, [_h('div'), _h('div'), _h('div')])]), (slotsTextFooter || textFooter) && _h('div', {
         class: 'message-text-footer'
       }, [slotsTextFooter || textFooter]), slotsBubbleEnd, slotsDefault]), (slotsFooter || footer) && _h('div', {
-        class: 'message-footer',
-        on: {
-          click: self.onFooterClickBound
-        }
+        ref: 'footerEl',
+        class: 'message-footer'
       }, [slotsFooter || footer]), slotsContentEnd]), slotsEnd]);
     },
 
@@ -5225,6 +6057,53 @@
       }
 
     },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+      this.onNameClick = this.onNameClick.bind(this);
+      this.onTextClick = this.onTextClick.bind(this);
+      this.onAvatarClick = this.onAvatarClick.bind(this);
+      this.onHeaderClick = this.onHeaderClick.bind(this);
+      this.onFooterClick = this.onFooterClick.bind(this);
+      this.onBubbleClick = this.onBubbleClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      var ref = this.$refs;
+      var el = ref.el;
+      var nameEl = ref.nameEl;
+      var textEl = ref.textEl;
+      var avatarEl = ref.avatarEl;
+      var headerEl = ref.headerEl;
+      var footerEl = ref.footerEl;
+      var bubbleEl = ref.bubbleEl;
+      el.addEventListener('click', this.onClick);
+      if (nameEl) { nameEl.addEventListener('click', this.onNameClick); }
+      if (textEl) { textEl.addEventListener('click', this.onTextClick); }
+      if (avatarEl) { avatarEl.addEventListener('click', this.onAvatarClick); }
+      if (headerEl) { headerEl.addEventListener('click', this.onHeaderClick); }
+      if (footerEl) { footerEl.addEventListener('click', this.onFooterClick); }
+      if (bubbleEl) { bubbleEl.addEventListener('click', this.onBubbleClick); }
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      var ref = this.$refs;
+      var el = ref.el;
+      var nameEl = ref.nameEl;
+      var textEl = ref.textEl;
+      var avatarEl = ref.avatarEl;
+      var headerEl = ref.headerEl;
+      var footerEl = ref.footerEl;
+      var bubbleEl = ref.bubbleEl;
+      el.removeEventListener('click', this.onClick);
+      if (nameEl) { nameEl.removeEventListener('click', this.onNameClick); }
+      if (textEl) { textEl.removeEventListener('click', this.onTextClick); }
+      if (avatarEl) { avatarEl.removeEventListener('click', this.onAvatarClick); }
+      if (headerEl) { headerEl.removeEventListener('click', this.onHeaderClick); }
+      if (footerEl) { footerEl.removeEventListener('click', this.onFooterClick); }
+      if (bubbleEl) { bubbleEl.removeEventListener('click', this.onBubbleClick); }
+    },
+
     methods: {
       onClick: function onClick(event) {
         this.dispatchEvent('click', event);
@@ -5275,11 +6154,6 @@
       }
     }, Mixins.colorProps),
 
-    created: function created() {
-      this.onClickBound = this.onClick.bind(this);
-      this.onDeleteClickBound = this.onDeleteClick.bind(this);
-    },
-
     render: function render() {
       var _h = this.$createElement;
       var self = this;
@@ -5291,11 +6165,9 @@
       var style = props.style;
       var classes = Utils.classNames(className, 'messagebar-attachment', Mixins.colorClasses(props));
       return _h('div', {
+        ref: 'el',
         style: style,
         class: classes,
-        on: {
-          click: self.onClickBound
-        },
         attrs: {
           id: id
         }
@@ -5304,11 +6176,30 @@
           src: image
         }
       }), deletable && _h('span', {
-        class: 'messagebar-attachment-delete',
-        on: {
-          click: self.onDeleteClickBound
-        }
+        ref: 'deleteEl',
+        class: 'messagebar-attachment-delete'
       }), this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+      this.onDeleteClick = this.onDeleteClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+
+      if (this.$refs.deleteEl) {
+        this.$refs.deleteEl.addEventListener('click', this.onDeleteClick);
+      }
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
+
+      if (this.$refs.deleteEl) {
+        this.$refs.deleteEl.removeEventListener('click', this.onDeleteClick);
+      }
     },
 
     methods: {
@@ -5374,10 +6265,6 @@
       checked: Boolean
     }, Mixins.colorProps),
 
-    created: function created() {
-      this.onChangeBound = this.onChange.bind(this);
-    },
-
     render: function render() {
       var _h = this.$createElement;
       var self = this;
@@ -5394,11 +6281,12 @@
       var inputEl;
       {
         inputEl = _h('input', {
+          ref: 'inputEl',
           domProps: {
             checked: checked
           },
           on: {
-            change: self.onChangeBound
+            change: self.onChange
           },
           attrs: {
             type: 'checkbox'
@@ -5414,6 +6302,10 @@
       }, [inputEl, _h('i', {
         class: 'icon icon-checkbox'
       }), this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onChange = this.onChange.bind(this);
     },
 
     methods: {
@@ -5518,11 +6410,15 @@
         default: 0
       },
       maxHeight: Number,
-      resizePage: Boolean,
+      resizePage: {
+        type: Boolean,
+        default: true
+      },
       sendLink: String,
       value: [String, Number, Array],
       disabled: Boolean,
       readonly: Boolean,
+      textareaId: [Number, String],
       name: String,
       placeholder: {
         type: String,
@@ -5535,14 +6431,14 @@
     }, Mixins.colorProps),
 
     created: function created() {
-      this.onChangeBound = this.onChange.bind(this);
-      this.onInputBound = this.onInput.bind(this);
-      this.onFocusBound = this.onFocus.bind(this);
-      this.onBlurBound = this.onBlur.bind(this);
-      this.onClickBound = this.onClick.bind(this);
-      this.onDeleteAttachmentBound = this.onDeleteAttachment.bind(this);
-      this.onClickAttachmentBound = this.onClickAttachment.bind(this);
-      this.onResizePageBound = this.onResizePage.bind(this);
+      this.onChange = this.onChange.bind(this);
+      this.onInput = this.onInput.bind(this);
+      this.onFocus = this.onFocus.bind(this);
+      this.onBlur = this.onBlur.bind(this);
+      this.onClick = this.onClick.bind(this);
+      this.onDeleteAttachment = this.onDeleteAttachment.bind(this);
+      this.onClickAttachment = this.onClickAttachment.bind(this);
+      this.onResizePage = this.onResizePage.bind(this);
     },
 
     render: function render() {
@@ -5601,10 +6497,10 @@
       }, [slotsBeforeArea, messagebarAttachmentsEl, _h(F7Input, {
         ref: 'area',
         on: {
-          input: self.onInputBound,
-          change: self.onChangeBound,
-          focus: self.onFocusBound,
-          blur: self.onBlurBound
+          input: self.onInput,
+          change: self.onChange,
+          focus: self.onFocus,
+          blur: self.onBlur
         },
         attrs: {
           type: 'textarea',
@@ -5618,7 +6514,7 @@
         }
       }), slotsAfterArea]), (sendLink && sendLink.length > 0 || slotsSendLink) && _h(F7Link, {
         on: {
-          click: self.onClickBound
+          click: self.onClick
         }
       }, [slotsSendLink || sendLink]), slotsInnerEnd, innerEndEls]), slotsAfterInner, messagebarSheetEl]);
     },
@@ -5666,9 +6562,9 @@
       if (!init) { return; }
       var el = self.$refs.el;
       if (!el) { return; }
-      el.addEventListener('messagebar:attachmentdelete', self.onDeleteAttachmentBound);
-      el.addEventListener('messagebar:attachmentclick', self.onClickAttachmentBound);
-      el.addEventListener('messagebar:resizepage', self.onResizePageBound);
+      el.addEventListener('messagebar:attachmentdelete', self.onDeleteAttachment);
+      el.addEventListener('messagebar:attachmentclick', self.onClickAttachment);
+      el.addEventListener('messagebar:resizepage', self.onResizePage);
       var params = Utils.noUndefinedProps({
         el: el,
         top: top,
@@ -5707,9 +6603,9 @@
       if (self.f7Messagebar && self.f7Messagebar.destroy) { self.f7Messagebar.destroy(); }
       var el = self.$refs.el;
       if (!el) { return; }
-      el.removeEventListener('messagebar:attachmentdelete', self.onDeleteAttachmentBound);
-      el.removeEventListener('messagebar:attachmentclick', self.onClickAttachmentBound);
-      el.removeEventListener('messagebar:resizepage', self.onResizePageBound);
+      el.removeEventListener('messagebar:attachmentdelete', self.onDeleteAttachment);
+      el.removeEventListener('messagebar:attachmentclick', self.onClickAttachment);
+      el.removeEventListener('messagebar:resizepage', self.onResizePage);
     },
 
     methods: {
@@ -6628,8 +7524,14 @@
       id: [String, Number],
       name: String,
       stacked: Boolean,
-      withSubnavbar: Boolean,
-      subnavbar: Boolean,
+      withSubnavbar: {
+        type: Boolean,
+        default: undefined
+      },
+      subnavbar: {
+        type: Boolean,
+        default: undefined
+      },
       noNavbar: Boolean,
       noToolbar: Boolean,
       tabs: Boolean,
@@ -6663,7 +7565,9 @@
 
       var state = (function () {
         return {
-          hasSubnavbar: false
+          hasSubnavbar: false,
+          routerClass: '',
+          routerForceUnstack: false
         };
       })();
 
@@ -6741,10 +7645,11 @@
         });
       }
 
-      var classes = Utils.classNames(className, 'page', {
-        stacked: stacked,
+      var forceSubnavbar = typeof subnavbar === 'undefined' && typeof withSubnavbar === 'undefined' ? hasSubnavbar || this.state.hasSubnavbar : false;
+      var classes = Utils.classNames(className, 'page', this.state.routerClass, {
+        stacked: stacked && !this.state.routerForceUnstack,
         tabs: tabs,
-        'page-with-subnavbar': subnavbar || withSubnavbar || hasSubnavbar,
+        'page-with-subnavbar': subnavbar || withSubnavbar || forceSubnavbar,
         'no-navbar': noNavbar,
         'no-toolbar': noToolbar,
         'no-swipeback': noSwipeback
@@ -6810,6 +7715,9 @@
       self.onPageAfterOut = self.onPageAfterOut.bind(self);
       self.onPageAfterIn = self.onPageAfterIn.bind(self);
       self.onPageBeforeRemove = self.onPageBeforeRemove.bind(self);
+      self.onPageStack = self.onPageStack.bind(self);
+      self.onPageUnstack = self.onPageUnstack.bind(self);
+      self.onPagePosition = self.onPagePosition.bind(self);
 
       if (ptr) {
         el.addEventListener('ptr:pullstart', self.onPtrPullStart);
@@ -6831,6 +7739,9 @@
       el.addEventListener('page:afterout', self.onPageAfterOut);
       el.addEventListener('page:afterin', self.onPageAfterIn);
       el.addEventListener('page:beforeremove', self.onPageBeforeRemove);
+      el.addEventListener('page:stack', self.onPageStack);
+      el.addEventListener('page:unstack', self.onPageUnstack);
+      el.addEventListener('page:position', self.onPagePosition);
     },
 
     beforeDestroy: function beforeDestroy() {
@@ -6850,6 +7761,9 @@
       el.removeEventListener('page:afterout', self.onPageAfterOut);
       el.removeEventListener('page:afterin', self.onPageAfterIn);
       el.removeEventListener('page:beforeremove', self.onPageBeforeRemove);
+      el.removeEventListener('page:stack', self.onPageStack);
+      el.removeEventListener('page:unstack', self.onPageUnstack);
+      el.removeEventListener('page:position', self.onPagePosition);
     },
 
     methods: {
@@ -6883,8 +7797,39 @@
         this.dispatchEvent('page:mounted pageMounted', event, page);
       },
 
+      onPageStack: function onPageStack() {
+        this.setState({
+          routerForceUnstack: false
+        });
+      },
+
+      onPageUnstack: function onPageUnstack() {
+        this.setState({
+          routerForceUnstack: true
+        });
+      },
+
+      onPagePosition: function onPagePosition(event) {
+        var position = event.detail.position;
+        this.setState({
+          routerClass: ("page-" + position)
+        });
+      },
+
       onPageInit: function onPageInit(event) {
         var page = event.detail;
+        var ref = this.props;
+        var withSubnavbar = ref.withSubnavbar;
+        var subnavbar = ref.subnavbar;
+
+        if (typeof withSubnavbar === 'undefined' && typeof subnavbar === 'undefined') {
+          if (page.$navbarEl && page.$navbarEl.length && page.$navbarEl.find('.subnavbar').length || page.$el.children('.navbar').find('.subnavbar').length) {
+            this.setState({
+              hasSubnavbar: true
+            });
+          }
+        }
+
         this.dispatchEvent('page:init pageInit', event, page);
       },
 
@@ -6895,6 +7840,19 @@
 
       onPageBeforeIn: function onPageBeforeIn(event) {
         var page = event.detail;
+
+        if (page.from === 'next') {
+          this.setState({
+            routerClass: 'page-next'
+          });
+        }
+
+        if (page.from === 'previous') {
+          this.setState({
+            routerClass: 'page-previous'
+          });
+        }
+
         this.dispatchEvent('page:beforein pageBeforeIn', event, page);
       },
 
@@ -6905,11 +7863,27 @@
 
       onPageAfterOut: function onPageAfterOut(event) {
         var page = event.detail;
+
+        if (page.to === 'next') {
+          this.setState({
+            routerClass: 'page-next'
+          });
+        }
+
+        if (page.to === 'previous') {
+          this.setState({
+            routerClass: 'page-previous'
+          });
+        }
+
         this.dispatchEvent('page:afterout pageAfterOut', event, page);
       },
 
       onPageAfterIn: function onPageAfterIn(event) {
         var page = event.detail;
+        this.setState({
+          routerClass: 'page-current'
+        });
         this.dispatchEvent('page:afterin pageAfterIn', event, page);
       },
 
@@ -6923,6 +7897,10 @@
         while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
 
         __vueComponentDispatchEvent.apply(void 0, [ this, events ].concat( args ));
+      },
+
+      setState: function setState(updater, callback) {
+        __vueComponentSetState(this, updater, callback);
       }
 
     },
@@ -7718,6 +8696,7 @@
       var inputEl;
       {
         inputEl = _h('input', {
+          ref: 'inputEl',
           domProps: {
             value: value,
             disabled: disabled,
@@ -7725,7 +8704,7 @@
             checked: checked
           },
           on: {
-            change: self.onChange.bind(self)
+            change: self.onChange
           },
           attrs: {
             type: 'radio',
@@ -7748,6 +8727,10 @@
           id: id
         }
       }, [inputEl, iconEl, this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onChange = this.onChange.bind(this);
     },
 
     methods: {
@@ -7798,13 +8781,23 @@
       return _h(RowTag, {
         style: style,
         class: classes,
-        on: {
-          click: self.onClick.bind(self)
-        },
+        ref: 'el',
         attrs: {
           id: id
         }
       }, [this.$slots['default']]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
     },
 
     methods: {
@@ -7854,6 +8847,11 @@
         type: Boolean,
         default: true
       },
+      value: [String, Number, Array],
+      inputEvents: {
+        type: String,
+        default: 'change input compositionend'
+      },
       expandable: Boolean,
       searchContainer: [String, Object],
       searchIn: {
@@ -7863,6 +8861,14 @@
       searchItem: {
         type: String,
         default: 'li'
+      },
+      searchGroup: {
+        type: String,
+        default: '.list-group'
+      },
+      searchGroupTitle: {
+        type: String,
+        default: '.item-divider, .list-group-title'
       },
       foundEl: {
         type: [String, Object],
@@ -7928,22 +8934,19 @@
       var className = props.className;
       var style = props.style;
       var id = props.id;
+      var value = props.value;
 
       if (clearButton) {
         clearEl = _h('span', {
-          class: 'input-clear-button',
-          on: {
-            click: self.onClearButtonClick.bind(self)
-          }
+          ref: 'clearEl',
+          class: 'input-clear-button'
         });
       }
 
       if (disableButton) {
         disableEl = _h('span', {
-          class: 'searchbar-disable-button',
-          on: {
-            click: self.onDisableButtonClick.bind(self)
-          }
+          ref: 'disableEl',
+          class: 'searchbar-disable-button'
         }, [disableButtonText]);
       }
 
@@ -7953,6 +8956,25 @@
         'no-hairline': noHairline,
         'searchbar-expandable': expandable
       }, Mixins.colorClasses(props));
+      var inputEl;
+      {
+        inputEl = _h('input', {
+          ref: 'inputEl',
+          domProps: {
+            value: value
+          },
+          on: {
+            input: self.onInput,
+            change: self.onChange,
+            focus: self.onFocus,
+            blur: self.onBlur
+          },
+          attrs: {
+            placeholder: placeholder,
+            type: 'search'
+          }
+        });
+      }
       return _h(SearchbarTag, {
         ref: 'el',
         style: style,
@@ -7964,39 +8986,31 @@
         class: 'searchbar-inner'
       }, [this.$slots['inner-start'], _h('div', {
         class: 'searchbar-input-wrap'
-      }, [this.$slots['input-wrap-start'], _h('input', {
-        on: {
-          input: self.onInput.bind(self),
-          change: self.onChange.bind(self),
-          focus: self.onFocus.bind(self),
-          blur: self.onBlur.bind(self)
-        },
-        attrs: {
-          placeholder: placeholder,
-          type: 'search'
-        }
-      }), _h('i', {
+      }, [this.$slots['input-wrap-start'], inputEl, _h('i', {
         class: 'searchbar-icon'
       }), clearEl, this.$slots['input-wrap-end']]), disableEl, this.$slots['inner-end'], this.$slots['default']]), this.$slots['after-inner']]);
     },
 
-    beforeDestroy: function beforeDestroy() {
-      var self = this;
-
-      if (self.props.form && self.$refs.el) {
-        self.$refs.el.removeEventListener('submit', self.onSubmitBound, false);
-      }
-
-      if (self.f7Searchbar && self.f7Searchbar.destroy) { self.f7Searchbar.destroy(); }
+    created: function created() {
+      this.onChange = this.onChange.bind(this);
+      this.onInput = this.onInput.bind(this);
+      this.onFocus = this.onFocus.bind(this);
+      this.onBlur = this.onBlur.bind(this);
+      this.onSubmit = this.onSubmit.bind(this);
+      this.onClearButtonClick = this.onClearButtonClick.bind(this);
+      this.onDisableButtonClick = this.onDisableButtonClick.bind(this);
     },
 
     mounted: function mounted() {
       var self = this;
       var ref = self.props;
       var init = ref.init;
+      var inputEvents = ref.inputEvents;
       var searchContainer = ref.searchContainer;
       var searchIn = ref.searchIn;
       var searchItem = ref.searchItem;
+      var searchGroup = ref.searchGroup;
+      var searchGroupTitle = ref.searchGroupTitle;
       var hideOnEnableEl = ref.hideOnEnableEl;
       var hideOnSearchEl = ref.hideOnSearchEl;
       var foundEl = ref.foundEl;
@@ -8010,20 +9024,34 @@
       var hideDividers = ref.hideDividers;
       var hideGroups = ref.hideGroups;
       var form = ref.form;
-      if (!init) { return; }
-      var el = self.$refs.el;
+      var ref$1 = self.$refs;
+      var inputEl = ref$1.inputEl;
+      var el = ref$1.el;
+      var clearEl = ref$1.clearEl;
+      var disableEl = ref$1.disableEl;
 
       if (form && el) {
-        self.onSubmitBound = self.onSubmit.bind(self);
-        el.addEventListener('submit', self.onSubmitBound, false);
+        el.addEventListener('submit', self.onSubmit, false);
       }
 
+      if (clearEl) {
+        clearEl.addEventListener('click', self.onClearButtonClick);
+      }
+
+      if (disableEl) {
+        disableEl.addEventListener('click', self.onDisableButtonClick);
+      }
+
+      if (!init) { return; }
       self.$f7ready(function () {
         var params = Utils.noUndefinedProps({
           el: self.$refs.el,
+          inputEvents: inputEvents,
           searchContainer: searchContainer,
           searchIn: searchIn,
           searchItem: searchItem,
+          searchGroup: searchGroup,
+          searchGroupTitle: searchGroupTitle,
           hideOnEnableEl: hideOnEnableEl,
           hideOnSearchEl: hideOnSearchEl,
           foundEl: foundEl,
@@ -8062,6 +9090,29 @@
         });
         self.f7Searchbar = self.$f7.searchbar.create(params);
       });
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      var self = this;
+      var ref = self.$refs;
+      var inputEl = ref.inputEl;
+      var el = ref.el;
+      var clearEl = ref.clearEl;
+      var disableEl = ref.disableEl;
+
+      if (self.props.form && el) {
+        el.removeEventListener('submit', self.onSubmit, false);
+      }
+
+      if (clearEl) {
+        clearEl.removeEventListener('click', self.onClearButtonClick);
+      }
+
+      if (disableEl) {
+        disableEl.removeEventListener('click', self.onDisableButtonClick);
+      }
+
+      if (self.f7Searchbar && self.f7Searchbar.destroy) { self.f7Searchbar.destroy(); }
     },
 
     methods: {
@@ -8295,7 +9346,7 @@
     beforeDestroy: function beforeDestroy() {
       var self = this;
       if (self.f7Sheet) { self.f7Sheet.destroy(); }
-      var el = self.$el;
+      var el = self.$refs.el;
       if (!el) { return; }
       el.removeEventListener('popup:open', self.onOpenBound);
       el.removeEventListener('popup:opened', self.onOpenedBound);
@@ -8477,12 +9528,13 @@
         var inputEl;
         {
           inputEl = _h('input', {
+            ref: 'inputEl',
             domProps: {
               readOnly: inputReadonly,
               value: value
             },
             on: {
-              input: self.onInput.bind(self)
+              input: self.onInput
             },
             attrs: {
               type: inputType,
@@ -8511,15 +9563,11 @@
           id: id
         }
       }, [_h('div', {
-        class: 'stepper-button-minus',
-        on: {
-          click: self.onMinusClickBound
-        }
+        ref: 'minusEl',
+        class: 'stepper-button-minus'
       }), inputWrapEl, valueEl, _h('div', {
-        class: 'stepper-button-plus',
-        on: {
-          click: self.onPlusClickBound
-        }
+        ref: 'plusEl',
+        class: 'stepper-button-plus'
       })]);
     },
 
@@ -8566,13 +9614,25 @@
     },
 
     created: function created() {
-      this.onInputBound = this.onInput.bind(this);
-      this.onMinusClickBound = this.onMinusClick.bind(this);
-      this.onPlusClickBound = this.onPlusClick.bind(this);
+      this.onInput = this.onInput.bind(this);
+      this.onMinusClick = this.onMinusClick.bind(this);
+      this.onPlusClick = this.onPlusClick.bind(this);
     },
 
     mounted: function mounted() {
       var self = this;
+      var ref = self.$refs;
+      var minusEl = ref.minusEl;
+      var plusEl = ref.plusEl;
+
+      if (minusEl) {
+        minusEl.addEventListener('click', self.onMinusClick);
+      }
+
+      if (plusEl) {
+        plusEl.addEventListener('click', self.onPlusClick);
+      }
+
       if (!self.props.init) { return; }
       self.$f7ready(function (f7) {
         var ref = self.props;
@@ -8613,10 +9673,23 @@
     },
 
     beforeDestroy: function beforeDestroy() {
-      if (!this.props.init) { return; }
+      var self = this;
+      var ref = self.$refs;
+      var minusEl = ref.minusEl;
+      var plusEl = ref.plusEl;
 
-      if (this.f7Stepper && this.f7Stepper.destroy) {
-        this.f7Stepper.destroy();
+      if (minusEl) {
+        minusEl.removeEventListener('click', self.onMinusClick);
+      }
+
+      if (plusEl) {
+        plusEl.removeEventListener('click', self.onPlusClick);
+      }
+
+      if (!self.props.init) { return; }
+
+      if (self.f7Stepper && self.f7Stepper.destroy) {
+        self.f7Stepper.destroy();
       }
     },
 
@@ -8790,17 +9863,27 @@
         'swipeout-close': close
       }, Mixins.colorClasses(props));
       return _h('a', {
+        ref: 'el',
         style: style,
         class: classes,
-        on: {
-          click: this.onClick.bind(this)
-        },
         attrs: {
           href: href || '#',
           id: id,
           'data-confirm': confirmText || undefined
         }
       }, [this.$slots['default'] || [text]]);
+    },
+
+    created: function created() {
+      this.onClick = this.onClick.bind(this);
+    },
+
+    mounted: function mounted() {
+      this.$refs.el.addEventListener('click', this.onClick);
+    },
+
+    beforeDestroy: function beforeDestroy() {
+      this.$refs.el.removeEventListener('click', this.onClick);
     },
 
     methods: {
@@ -9164,27 +10247,31 @@
       var style = props.style;
       var className = props.className;
       var routable = props.routable;
-      var classes = Utils.classNames(className, {
+      var classes = Utils.classNames(className, Mixins.colorClasses(props));
+      var wrapClasses = Utils.classNames({
         'tabs-animated-wrap': animated,
-        'tabs-swipeable-wrap': swipeable,
+        'tabs-swipeable-wrap': swipeable
+      });
+      var tabsClasses = Utils.classNames({
+        tabs: true,
         'tabs-routable': routable
-      }, Mixins.colorClasses(props));
+      });
 
       if (animated || swipeable) {
         return _h('div', {
           style: style,
-          class: classes,
+          class: Utils.classNames(wrapClasses, classes),
           attrs: {
             id: id
           }
         }, [_h('div', {
-          class: 'tabs'
+          class: tabsClasses
         }, [this.$slots['default']])]);
       }
 
       return _h('div', {
         style: style,
-        class: Utils.classNames('tabs', classes),
+        class: Utils.classNames(tabsClasses, classes),
         attrs: {
           id: id
         }
@@ -9301,7 +10388,7 @@
       url: String,
       main: Boolean,
       stackPages: Boolean,
-      xhrCache: String,
+      xhrCache: Boolean,
       xhrCacheIgnore: Array,
       xhrCacheIgnoreGetParameters: Boolean,
       xhrCacheDuration: Number,
@@ -9317,6 +10404,11 @@
       iosSwipeBackAnimateOpacity: Boolean,
       iosSwipeBackActiveArea: Number,
       iosSwipeBackThreshold: Number,
+      mdSwipeBack: Boolean,
+      mdSwipeBackAnimateShadow: Boolean,
+      mdSwipeBackAnimateOpacity: Boolean,
+      mdSwipeBackActiveArea: Number,
+      mdSwipeBackThreshold: Number,
       pushState: Boolean,
       pushStateRoot: String,
       pushStateAnimate: Boolean,
@@ -9607,6 +10699,13 @@
       removePage: function removePage($pageEl) {
         if (!$pageEl) { return; }
         var router = this;
+        var f7Page;
+        if ('length' in $pageEl) { f7Page = $pageEl[0].f7Page; }
+        else { f7Page = $pageEl.f7Page; }
+        if (f7Page && f7Page.route && f7Page.route.route && f7Page.route.route.keepAlive) {
+          router.app.$($pageEl).remove();
+          return;
+        }
         var routerComponent;
         f7.routers.views.forEach(function (data) {
           if (data.el && data.el === router.el) {
@@ -9758,15 +10857,15 @@
   };
 
   /**
-   * Framework7 Vue 3.4.0
+   * Framework7 Vue 3.6.7
    * Build full featured iOS & Android apps using Framework7 & Vue
    * http://framework7.io/vue/
    *
-   * Copyright 2014-2018 Vladimir Kharlampidi
+   * Copyright 2014-2019 Vladimir Kharlampidi
    *
    * Released under the MIT License
    *
-   * Released on: September 28, 2018
+   * Released on: February 13, 2019
    */
 
   var Plugin = {
@@ -9812,6 +10911,7 @@
       Vue.component('f7-list-button', f7ListButton);
       Vue.component('f7-list-group', f7ListGroup);
       Vue.component('f7-list-index', f7ListIndex);
+      Vue.component('f7-list-input', f7ListInput);
       Vue.component('f7-list-item-cell', f7ListItemCell);
       Vue.component('f7-list-item-content', F7ListItemContent);
       Vue.component('f7-list-item-row', f7ListItemRow);
@@ -9906,6 +11006,9 @@
           var route;
           // eslint-disable-next-line
           {
+            if (self.$vnode && self.$vnode.data && self.$vnode.data.props && self.$vnode.data.props.f7route) {
+              route = self.$vnode.data.props.f7route;
+            }
             var parent = self;
             while (parent && !route) {
               if (parent._f7route) { route = parent._f7route; }
@@ -9929,6 +11032,9 @@
           var router;
           // eslint-disable-next-line
           {
+            if (self.$vnode && self.$vnode.data && self.$vnode.data.props && self.$vnode.data.props.f7route) {
+              router = self.$vnode.data.props.f7router;
+            }
             var parent = self;
             while (parent && !router) {
               if (parent._f7router) { router = parent._f7router; }
@@ -9955,4 +11061,4 @@
 
   return Plugin;
 
-})));
+}));

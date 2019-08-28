@@ -1,13 +1,13 @@
 /**
- * Framework7 Vue 3.4.0
+ * Framework7 Vue 3.6.7
  * Build full featured iOS & Android apps using Framework7 & Vue
  * http://framework7.io/vue/
  *
- * Copyright 2014-2018 Vladimir Kharlampidi
+ * Copyright 2014-2019 Vladimir Kharlampidi
  *
  * Released under the MIT License
  *
- * Released on: September 28, 2018
+ * Released on: February 13, 2019
  */
 
 import f7AccordionContent from './components/accordion-content';
@@ -43,6 +43,7 @@ import f7Link from './components/link';
 import f7ListButton from './components/list-button';
 import f7ListGroup from './components/list-group';
 import f7ListIndex from './components/list-index';
+import f7ListInput from './components/list-input';
 import f7ListItemCell from './components/list-item-cell';
 import f7ListItemContent from './components/list-item-content';
 import f7ListItemRow from './components/list-item-row';
@@ -127,6 +128,7 @@ export {
   f7ListButton,
   f7ListGroup,
   f7ListIndex,
+  f7ListInput,
   f7ListItemCell,
   f7ListItemContent,
   f7ListItemRow,
