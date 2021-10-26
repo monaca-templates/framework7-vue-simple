@@ -21,7 +21,7 @@
   "_resolved": "https://registry.npmjs.org/framework7-vue/-/framework7-vue-3.6.7.tgz",
   "_shasum": "76c611f5fb707507392cb2f65f02a9e036783f67",
   "_spec": "framework7-vue@^3.0.0",
-  "_where": "/Users/asial/projects/monaca-templates/framework7-vue-simple",
+  "_where": "Framework7_Vue_Simple",
   "author": {
     "name": "Vladimir Kharlampidi"
   },
