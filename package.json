@@ -1,7 +1,7 @@
 {
   "name": "frameworkd7-vue-simple",
   "displayName": "Framework7 Vue Simple",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "dependencies": {
     "cordova-plugin-splashscreen": "6.0.0",
     "cordova-plugin-statusbar": "2.4.3",
